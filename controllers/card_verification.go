@@ -13,6 +13,7 @@ import (
 type CreditCardVerification interface {
 	lengthValidate()	error
 	luhnValidate()		error
+	resultBuilder() 	string
 }
 
 
@@ -74,7 +75,7 @@ func verify(ccv CreditCardVerification) map[string]interface{}{
 	ccv.lengthValidate()
 	ccv.luhnValidate()
 	
-	return u.Message(true, "Success")
+	return u.Message(true, ccv.resultBuilder())
 }
 
 
@@ -112,7 +113,55 @@ func (creditCard *CreditCard) lengthValidate() error {
 }
 
 
+// sums indivual digits e.g 107 = 1 + 0 + 7
+func charSum(digit int) int {
+	sum := 0
+
+	for digit > 0 {
+		sum 	+= digit % 10
+		digit 	= digit / 10
+	}
+
+	return sum
+}
+
+
+/*
+	1. Starting with the next to last digit and continuing with every other digit going back to the
+	beginning of the card, double the digit.
+
+	2. Sum all doubled and untouched digits in the number. For digits greater than 9 you will need to
+	split them and sum them independently (i.e. "10", 1 + 0).
+
+	3. If that total is a multiple of 10, the number is valid.
+*/
 func (creditCard *CreditCard) luhnValidate() error {
+	cardNumber := strings.ReplaceAll(creditCard.CardNumber, " ", "")
+	sum := 0
+
+	// iterate backwards through cc num
+	for i := len(cardNumber) - 1; i >= 0; i-- {
+		val 	:= int(cardNumber[i]) - 48
+		count 	:= 0
+
+		// Iterating over every second value of the credit card number
+		if count % 2 == 0 {
+			sum += charSum(val * 2)
+		} else {
+			sum += val
+		}
+	}
+
+	if sum % 10 == 0 {
+		creditCard.Valid = "valid"
+	} else {
+		creditCard.Valid = "invalid"
+	}
+	
 	return nil 
 }
 
+// Builds the response string
+func (creditCard *CreditCard) resultBuilder() string {
+	return fmt.Sprintf("%v: %v (%v)", creditCard.Provider, creditCard.CardNumber, creditCard.Valid)
+}
