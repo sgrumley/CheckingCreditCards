@@ -22,7 +22,7 @@ const (
 	AMEX CardProvider 	= "AMEX"
 	Discover 			= "Discover"
 	MasterCard 			= "MasterCard"
-	Visa 				= "Visa"
+	Visa 				= "VISA"
 	Unknown 			= "Unknown"
 )
 
@@ -136,13 +136,12 @@ func charSum(digit int) int {
 	3. If that total is a multiple of 10, the number is valid.
 */
 func (creditCard *CreditCard) luhnValidate() error {
-	cardNumber := strings.ReplaceAll(creditCard.CardNumber, " ", "")
-	sum := 0
+	cardNumber 	:= strings.ReplaceAll(creditCard.CardNumber, " ", "")
+	sum, count 		:= 0, 1
 
 	// iterate backwards through cc num
 	for i := len(cardNumber) - 1; i >= 0; i-- {
 		val 	:= int(cardNumber[i]) - 48
-		count 	:= 0
 
 		// Iterating over every second value of the credit card number
 		if count % 2 == 0 {
@@ -150,6 +149,8 @@ func (creditCard *CreditCard) luhnValidate() error {
 		} else {
 			sum += val
 		}
+
+		count++
 	}
 
 	if sum % 10 == 0 {
